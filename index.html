@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Library Access Portal</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Pharmacy College Library</p>
+          <h1>Library Access Portal</h1>
+        </div>
+        <div class="top-actions">
+          <button class="button" id="printResults" type="button">Print</button>
+          <button class="button" id="clearFilters" type="button">Reset</button>
+        </div>
+      </header>
+
+      <section class="search-band" aria-label="Search and filters">
+        <div class="search-box">
+          <span class="search-mark" aria-hidden="true"></span>
+          <input id="searchInput" type="search" autocomplete="off" placeholder="Search accession, title, author, publisher, student, guide, year">
+        </div>
+        <div class="filters">
+          <label>
+            <span>Type</span>
+            <select id="typeFilter"></select>
+          </label>
+          <label>
+            <span>Category</span>
+            <select id="categoryFilter"></select>
+          </label>
+          <label>
+            <span>Shelf</span>
+            <select id="shelfFilter"></select>
+          </label>
+          <label>
+            <span>Rack</span>
+            <select id="rackFilter"></select>
+          </label>
+          <label>
+            <span>Sort</span>
+            <select id="sortMode">
+              <option value="location">Shelf and rack</option>
+              <option value="title">Title A-Z</option>
+              <option value="accession">Accession</option>
+              <option value="year">Year</option>
+              <option value="category">Category</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="summary-grid" id="summaryGrid" aria-label="Record summary"></section>
+
+      <section class="workspace">
+        <aside class="side-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Browse</p>
+              <h2>Shelves</h2>
+            </div>
+            <span id="shelfCount"></span>
+          </div>
+          <div id="shelfList" class="shelf-list"></div>
+        </aside>
+
+        <section class="results-panel">
+          <div class="results-heading">
+            <div>
+              <p class="eyebrow">Matching Records</p>
+              <h2 id="resultCount">0 records</h2>
+            </div>
+            <div id="activeFilters" class="active-filters"></div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>SL</th>
+                  <th>Type</th>
+                  <th>Accession</th>
+                  <th>Title</th>
+                  <th>Author / Student</th>
+                  <th>Publisher / Guide</th>
+                  <th>Year</th>
+                  <th>Location</th>
+                </tr>
+              </thead>
+              <tbody id="resultBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <aside class="detail-drawer" id="detailDrawer" aria-live="polite">
+      <button class="close-button" id="closeDrawer" type="button">Close</button>
+      <p class="eyebrow" id="detailCategory">Record</p>
+      <h2 id="detailTitle">Select a record</h2>
+      <div id="detailLocation" class="location-card"></div>
+      <dl id="detailFields"></dl>
+    </aside>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
