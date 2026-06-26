@@ -39,6 +39,21 @@ The project is deployed using Vercel.
 
 Any updates pushed to the connected GitHub repository will automatically trigger a new deployment on Vercel.
 
+## Shared Database v2
+
+The current root files are the stable static app.
+
+The `v2/` folder contains the Supabase-ready shared database version. It keeps a local fallback until Supabase is configured, so it can be tested without breaking the current live app.
+
+Use these files for v2 setup:
+
+* `v2/README_SETUP.md`
+* `v2/config.js`
+* `supabase/schema.sql`
+* `supabase/make_seed_csv.py`
+
+After Supabase is connected, teacher edits and newly added books can be saved to the shared database and become visible to everyone.
+
 ## How to Update the Website
 
 1. Make changes in the project files.

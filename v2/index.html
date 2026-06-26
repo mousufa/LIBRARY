@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Library Access Portal</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Pharmacy College Library</p>
+          <h1>Library Access Portal</h1>
+        </div>
+        <div class="top-actions">
+          <span class="mode-badge" id="dataMode">Local fallback</span>
+          <button class="button" id="chatToggle" type="button">Chatbot</button>
+          <button class="button" id="teacherLoginToggle" type="button">Teacher login</button>
+          <button class="button hidden" id="teacherMode" type="button">Teacher update</button>
+          <button class="button hidden" id="addBookToggle" type="button">Add book</button>
+          <button class="button hidden" id="exportUpdates" type="button">Export updates</button>
+          <button class="button" id="printResults" type="button">Print</button>
+          <button class="button" id="clearFilters" type="button">Reset</button>
+        </div>
+      </header>
+
+      <section class="auth-panel hidden" id="authPanel" aria-label="Teacher login">
+        <div>
+          <p class="eyebrow">Teacher access</p>
+          <h2>Sign in to save edits for everyone</h2>
+        </div>
+        <form class="auth-form" id="authForm">
+          <input id="teacherEmail" type="email" autocomplete="username" placeholder="Teacher email" required>
+          <input id="teacherPassword" type="password" autocomplete="current-password" placeholder="Password" required>
+          <button class="button primary" type="submit">Sign in</button>
+          <button class="button hidden" id="teacherLogout" type="button">Sign out</button>
+        </form>
+        <p class="auth-status" id="authStatus">Teacher login becomes active after Supabase is configured.</p>
+      </section>
+
+      <section class="chat-panel hidden" id="chatPanel" aria-label="Library chatbot">
+        <div class="chat-header">
+          <div>
+            <p class="eyebrow">Catalogue Assistant</p>
+            <h2>Ask about books, shelves, authors, status, or accession numbers</h2>
+          </div>
+          <button class="close-button" id="closeChat" type="button">Close</button>
+        </div>
+        <div class="chat-log" id="chatLog"></div>
+        <form class="chat-form" id="chatForm">
+          <input id="chatInput" type="search" autocomplete="off" placeholder="Example: where is Essentials of Pharmacotherapeutics?">
+          <button class="button primary" type="submit">Ask</button>
+        </form>
+      </section>
+
+      <section class="add-book-panel hidden" id="addBookPanel" aria-label="Add new library book">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Teacher entry</p>
+            <h2>Add new book</h2>
+          </div>
+          <button class="close-button" id="closeAddBook" type="button">Close</button>
+        </div>
+        <form class="add-book-form" id="addBookForm">
+          <label>
+            <span>Accession number</span>
+            <input id="newAccession" type="text" required>
+          </label>
+          <label class="wide">
+            <span>Book title</span>
+            <input id="newTitle" type="text" required>
+          </label>
+          <label>
+            <span>Author</span>
+            <input id="newAuthor" type="text">
+          </label>
+          <label>
+            <span>Publisher</span>
+            <input id="newPublisher" type="text">
+          </label>
+          <label>
+            <span>Edition</span>
+            <input id="newEdition" type="text">
+          </label>
+          <label>
+            <span>Year</span>
+            <input id="newYear" type="text">
+          </label>
+          <label>
+            <span>Source of purchase</span>
+            <input id="newSource" type="text">
+          </label>
+          <label>
+            <span>Shelf</span>
+            <input id="newShelf" type="text" required placeholder="Example: 5">
+          </label>
+          <label>
+            <span>Rack</span>
+            <input id="newRack" type="text" placeholder="Example: A">
+          </label>
+          <label>
+            <span>Status</span>
+            <select id="newStatus">
+              <option value="Available">Available in library</option>
+              <option value="Logged, not yet shelved">Logged, not yet shelved</option>
+              <option value="Needs verification">Needs verification</option>
+            </select>
+          </label>
+          <label class="wide">
+            <span>Teacher note</span>
+            <input id="newNote" type="text" placeholder="Bill number, donor, correction note">
+          </label>
+          <div class="form-actions wide">
+            <button class="button primary" type="submit">Save new book</button>
+            <button class="button" id="resetAddBook" type="reset">Clear</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="search-band" aria-label="Search and filters">
+        <div class="search-box">
+          <span class="search-mark" aria-hidden="true"></span>
+          <input id="searchInput" type="search" autocomplete="off" placeholder="Search accession, title, author, publisher, student, guide, year">
+        </div>
+        <div class="filters">
+          <label>
+            <span>Type</span>
+            <select id="typeFilter"></select>
+          </label>
+          <label>
+            <span>Category</span>
+            <select id="categoryFilter"></select>
+          </label>
+          <label>
+            <span>Shelf</span>
+            <select id="shelfFilter"></select>
+          </label>
+          <label>
+            <span>Rack</span>
+            <select id="rackFilter"></select>
+          </label>
+          <label>
+            <span>Status</span>
+            <select id="statusFilter"></select>
+          </label>
+          <label>
+            <span>Sort</span>
+            <select id="sortMode">
+              <option value="location">Shelf and rack</option>
+              <option value="title">Title A-Z</option>
+              <option value="accession">Accession</option>
+              <option value="year">Year</option>
+              <option value="category">Category</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="summary-grid" id="summaryGrid" aria-label="Record summary"></section>
+
+      <section class="workspace">
+        <aside class="side-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Browse</p>
+              <h2>Shelves & status</h2>
+            </div>
+            <span id="shelfCount"></span>
+          </div>
+          <div id="shelfList" class="shelf-list"></div>
+        </aside>
+
+        <section class="results-panel">
+          <div class="results-heading">
+            <div>
+              <p class="eyebrow">Matching Records</p>
+              <h2 id="resultCount">0 records</h2>
+            </div>
+            <div id="activeFilters" class="active-filters"></div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>SL</th>
+                  <th>Type</th>
+                  <th>Accession</th>
+                  <th>Title</th>
+                  <th>Author / Student</th>
+                  <th>Publisher / Guide</th>
+                  <th>Year</th>
+                  <th>Location</th>
+                </tr>
+              </thead>
+              <tbody id="resultBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <aside class="detail-drawer" id="detailDrawer" aria-live="polite">
+      <button class="close-button" id="closeDrawer" type="button">Close</button>
+      <p class="eyebrow" id="detailCategory">Record</p>
+      <h2 id="detailTitle">Select a record</h2>
+      <div id="detailLocation" class="location-card"></div>
+      <dl id="detailFields"></dl>
+      <section class="admin-panel hidden" id="adminPanel">
+        <p class="eyebrow">Teacher update</p>
+        <label>
+          <span>Status</span>
+          <select id="adminStatus">
+            <option value="Available">Available in library</option>
+            <option value="Out with student/staff">Out with student/staff</option>
+            <option value="Not available">Not available</option>
+            <option value="Logged, not yet shelved">Logged, not yet shelved</option>
+            <option value="Needs verification">Needs verification</option>
+            <option value="Missing">Missing / not found</option>
+          </select>
+        </label>
+        <div class="admin-grid">
+          <label>
+            <span>Shelf</span>
+            <input id="adminShelf" type="text" placeholder="Example: 5">
+          </label>
+          <label>
+            <span>Rack</span>
+            <input id="adminRack" type="text" placeholder="Example: A">
+          </label>
+        </div>
+        <label>
+          <span>Note</span>
+          <input id="adminNote" type="text" placeholder="Return date, borrower, correction note">
+        </label>
+        <button class="button primary" id="saveUpdate" type="button">Save update</button>
+        <button class="button" id="undoUpdate" type="button">Undo last update</button>
+      </section>
+    </aside>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
