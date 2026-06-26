@@ -1,5 +1,6 @@
 const shelfNames = window.LIBRARY_SHELF_NAMES || {};
 const updateStorageKey = "libraryTeacherUpdatesV1";
+const addedBooksStorageKey = "libraryTeacherAddedBooksV1";
 const teacherPasscode = "LIBRARY2026";
 let teacherUnlocked = false;
 let selectedRecordId = "";
@@ -8,6 +9,7 @@ const baseRecords = (window.LIBRARY_DATA || []).map((record) => ({
   ...record,
   type: record.category === "Books" ? "Books" : record.category === "Journals" ? "Journals" : "Thesis / Projects",
 }));
+let teacherAddedBooks = loadAddedBooks();
 let teacherUpdates = loadUpdates();
 let records = applyUpdates();
 
@@ -37,7 +39,29 @@ const els = {
   resultBody: document.getElementById("resultBody"),
   clearFilters: document.getElementById("clearFilters"),
   printResults: document.getElementById("printResults"),
+  chatToggle: document.getElementById("chatToggle"),
+  chatPanel: document.getElementById("chatPanel"),
+  closeChat: document.getElementById("closeChat"),
+  chatLog: document.getElementById("chatLog"),
+  chatForm: document.getElementById("chatForm"),
+  chatInput: document.getElementById("chatInput"),
   teacherMode: document.getElementById("teacherMode"),
+  addBookToggle: document.getElementById("addBookToggle"),
+  addBookPanel: document.getElementById("addBookPanel"),
+  closeAddBook: document.getElementById("closeAddBook"),
+  addBookForm: document.getElementById("addBookForm"),
+  resetAddBook: document.getElementById("resetAddBook"),
+  newAccession: document.getElementById("newAccession"),
+  newTitle: document.getElementById("newTitle"),
+  newAuthor: document.getElementById("newAuthor"),
+  newPublisher: document.getElementById("newPublisher"),
+  newEdition: document.getElementById("newEdition"),
+  newYear: document.getElementById("newYear"),
+  newSource: document.getElementById("newSource"),
+  newShelf: document.getElementById("newShelf"),
+  newRack: document.getElementById("newRack"),
+  newStatus: document.getElementById("newStatus"),
+  newNote: document.getElementById("newNote"),
   exportUpdates: document.getElementById("exportUpdates"),
   detailDrawer: document.getElementById("detailDrawer"),
   detailCategory: document.getElementById("detailCategory"),
@@ -55,6 +79,7 @@ const els = {
 };
 
 const categories = ["Books", "Journals", "B.Pharm Projects", "Practice School", "M.Pharm Pharmacy Practice", "M.Pharm Pharmaceutics"];
+const academicProjectCategories = ["B.Pharm Projects", "Practice School", "M.Pharm Pharmacy Practice", "M.Pharm Pharmaceutics"];
 
 function unique(list) {
   return [...new Set(list.filter(Boolean))];
@@ -68,12 +93,26 @@ function loadUpdates() {
   }
 }
 
+function loadAddedBooks() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(addedBooksStorageKey) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 function saveUpdates() {
   localStorage.setItem(updateStorageKey, JSON.stringify(teacherUpdates));
 }
 
+function saveAddedBooks() {
+  localStorage.setItem(addedBooksStorageKey, JSON.stringify(teacherAddedBooks));
+}
+
 function applyUpdates() {
-  return baseRecords.map((record) => ({ ...record, ...(teacherUpdates[record.id] || {}) }));
+  const source = [...baseRecords, ...teacherAddedBooks];
+  return source.map((record) => ({ ...record, ...(teacherUpdates[record.id] || {}) }));
 }
 
 function refreshRecords() {
@@ -91,9 +130,39 @@ function shelfName(shelf) {
 function shelfLabel(shelf) {
   if (!shelf) return "Needs verification";
   if (shelf === "SH") return "SH - Student / staff hand";
-  if (shelf === "TableTop") return "Table top";
+  if (shelf === "TableTop") return "Academic projects pending shelf";
   const name = shelfName(shelf);
   return name ? `Shelf ${shelf} - ${name}` : `Shelf ${shelf}`;
+}
+
+function nextBookSerial() {
+  const bookSerials = records
+    .filter((record) => record.category === "Books")
+    .map((record) => Number.parseInt(record.serial, 10))
+    .filter(Number.isFinite);
+  return String((bookSerials.length ? Math.max(...bookSerials) : 0) + 1);
+}
+
+function teacherBookId() {
+  return `teacher-book-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function normalizeRack(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
+function locationFrom(status, shelf, rack) {
+  if (status === "Logged, not yet shelved" || status === "Needs verification") return "Pending shelf assignment";
+  if (rack) return `${shelf}-${rack}`;
+  return shelf || "Needs verification";
+}
+
+function isStudentStaffHand(record) {
+  return record.shelf === "SH" || record.status === "Out with student/staff";
+}
+
+function isAcademicProjectRecord(record) {
+  return academicProjectCategories.includes(record.category);
 }
 
 function statusClass(record) {
@@ -137,7 +206,8 @@ function secondaryPerson(record) {
 
 function recordLocation(record) {
   if (record.status === "Out with student/staff" || record.shelf === "SH") return "SH - with student/staff";
-  if (record.shelf === "TableTop" || record.status === "Logged, not yet shelved" || record.status === "Needs verification") return "Table top";
+  if (record.shelf === "TableTop" || record.status === "Logged, not yet shelved") return "Academic projects pending shelf";
+  if (record.status === "Needs verification") return "Pending verification";
   if (record.status === "Not available") return "Not available";
   if (record.shelf && record.rack) return `${record.shelf}-${record.rack}`;
   if (record.location) return record.location;
@@ -255,14 +325,14 @@ function renderFilters() {
 function renderSummary(list) {
   const totalBooks = records.filter((record) => record.category === "Books").length;
   const totalJournals = records.filter((record) => record.category === "Journals").length;
-  const totalOut = records.filter((record) => record.status === "Out with student/staff").length;
-  const totalPending = records.filter((record) => record.shelf === "TableTop" || record.status === "Logged, not yet shelved" || record.status === "Needs verification").length;
+  const totalOut = records.filter(isStudentStaffHand).length;
+  const totalAcademicProjects = records.filter(isAcademicProjectRecord).length;
   const cards = [
     ["Total catalogue records", records.length, list.length],
     ["Library books", totalBooks, list.filter((record) => record.category === "Books").length],
     ["Journals", totalJournals, list.filter((record) => record.category === "Journals").length],
-    ["Student / staff hand", totalOut, list.filter((record) => record.status === "Out with student/staff").length],
-    ["Table top", totalPending, list.filter((record) => record.shelf === "TableTop" || record.status === "Logged, not yet shelved" || record.status === "Needs verification").length],
+    ["Student / staff hand", totalOut, list.filter(isStudentStaffHand).length],
+    ["Academic Projects and Practice Records", totalAcademicProjects, list.filter(isAcademicProjectRecord).length],
   ];
   els.summaryGrid.innerHTML = cards.map(([label, count, shown]) => (
     `<button class="summary-card" data-summary="${escapeHtml(label)}">
@@ -274,10 +344,12 @@ function renderSummary(list) {
   els.summaryGrid.querySelectorAll(".summary-card").forEach((button) => {
     button.addEventListener("click", () => {
       const value = button.dataset.summary;
+      state.shelf = "All";
+      state.rack = "All";
+      state.status = "All";
       if (value === "Total catalogue records" || value === "All" || value === "Shelves") {
         state.type = "All";
         state.category = "All";
-        state.status = "All";
       } else if (value === "Library books") {
         state.type = "Books";
         state.category = "Books";
@@ -287,20 +359,16 @@ function renderSummary(list) {
       } else if (value === "Student / staff hand") {
         state.type = "All";
         state.category = "All";
-        state.status = "Out with student/staff";
-      } else if (value === "Table top") {
-        state.type = "All";
+        state.shelf = "SH";
+      } else if (value === "Academic Projects and Practice Records") {
+        state.type = "Thesis / Projects";
         state.category = "All";
-        state.status = "All";
-        state.shelf = "TableTop";
         state.query = "";
         els.searchInput.value = "";
       } else {
         state.type = "Thesis / Projects";
         state.category = "All";
       }
-      state.shelf = "All";
-      state.rack = "All";
       render();
     });
   });
@@ -441,6 +509,8 @@ function unlockTeacherMode() {
   if (teacherUnlocked) {
     teacherUnlocked = false;
     els.teacherMode.textContent = "Teacher update";
+    els.addBookToggle.classList.add("hidden");
+    els.addBookPanel.classList.add("hidden");
     els.exportUpdates.classList.add("hidden");
     if (selectedRecordId) showDetail(selectedRecordId);
     return;
@@ -452,6 +522,7 @@ function unlockTeacherMode() {
   }
   teacherUnlocked = true;
   els.teacherMode.textContent = "Exit teacher mode";
+  els.addBookToggle.classList.remove("hidden");
   els.exportUpdates.classList.remove("hidden");
   if (selectedRecordId) showDetail(selectedRecordId);
 }
@@ -463,7 +534,7 @@ function saveTeacherUpdate() {
   const status = els.adminStatus.value;
   const shelf = els.adminShelf.value.trim();
   const rack = els.adminRack.value.trim().toUpperCase();
-  const location = status === "Out with student/staff" ? "SH" : status === "Logged, not yet shelved" || status === "Needs verification" ? "Table top" : status === "Not available" ? "Not available" : rack ? `${shelf}-${rack}` : shelf;
+  const location = status === "Out with student/staff" ? "SH" : status === "Logged, not yet shelved" || status === "Needs verification" ? "Pending shelf assignment" : status === "Not available" ? "Not available" : rack ? `${shelf}-${rack}` : shelf;
   lastTeacherAction = {
     id: selectedRecordId,
     previous: teacherUpdates[selectedRecordId] ? { ...teacherUpdates[selectedRecordId] } : null,
@@ -499,10 +570,68 @@ function undoTeacherUpdate() {
   showDetail(id);
 }
 
+function saveNewBook(event) {
+  event.preventDefault();
+  if (!teacherUnlocked) return;
+  const accession = els.newAccession.value.trim();
+  const title = els.newTitle.value.trim();
+  const shelf = els.newShelf.value.trim();
+  const rack = normalizeRack(els.newRack.value);
+  const status = els.newStatus.value;
+  if (!accession || !title || !shelf) {
+    window.alert("Accession number, title, and shelf are required.");
+    return;
+  }
+  const duplicate = records.find((record) => norm(record.accession) === norm(accession));
+  if (duplicate && !window.confirm(`Accession ${accession} already exists for "${duplicate.title}". Add another copy anyway?`)) {
+    return;
+  }
+  const location = locationFrom(status, shelf, rack);
+  const record = {
+    id: teacherBookId(),
+    category: "Books",
+    type: "Books",
+    serial: nextBookSerial(),
+    accession,
+    title,
+    author: els.newAuthor.value.trim(),
+    publisher: els.newPublisher.value.trim(),
+    edition: els.newEdition.value.trim(),
+    year: els.newYear.value.trim(),
+    issue: "",
+    source: els.newSource.value.trim(),
+    student: "",
+    guide: "",
+    shelf: status === "Logged, not yet shelved" || status === "Needs verification" ? "TableTop" : shelf,
+    rack: status === "Logged, not yet shelved" || status === "Needs verification" ? "" : rack,
+    homeShelf: shelf,
+    homeRack: rack,
+    location,
+    status,
+    catalogNote: els.newNote.value.trim() ? `Teacher note: ${els.newNote.value.trim()}` : "Teacher-added book. Export updates before clearing browser data.",
+    addedByTeacher: true,
+    addedAt: new Date().toISOString(),
+  };
+  teacherAddedBooks.push(record);
+  saveAddedBooks();
+  refreshRecords();
+  state.type = "Books";
+  state.category = "Books";
+  state.shelf = "All";
+  state.rack = "All";
+  state.status = "All";
+  state.query = accession;
+  els.searchInput.value = accession;
+  els.addBookForm.reset();
+  render();
+  showDetail(record.id);
+}
+
 function exportTeacherUpdates() {
-  const rows = Object.entries(teacherUpdates).map(([id, update]) => {
-    const base = baseRecords.find((record) => record.id === id) || {};
+  const editedRows = Object.entries(teacherUpdates).map(([id, update]) => {
+    const base = [...baseRecords, ...teacherAddedBooks].find((record) => record.id === id) || {};
     return {
+      action: "edit",
       id,
       category: base.category || "",
       accession: base.accession || "",
@@ -514,12 +643,105 @@ function exportTeacherUpdates() {
       updatedAt: update.updatedAt || "",
     };
   });
-  const blob = new Blob([JSON.stringify(rows, null, 2)], { type: "application/json" });
+  const addedRows = teacherAddedBooks.map((record) => ({
+    action: "add_book",
+    id: record.id,
+    category: record.category,
+    accession: record.accession,
+    title: record.title,
+    author: record.author,
+    publisher: record.publisher,
+    edition: record.edition,
+    year: record.year,
+    source: record.source,
+    status: record.status,
+    shelf: record.shelf,
+    rack: record.rack,
+    homeShelf: record.homeShelf,
+    homeRack: record.homeRack,
+    note: record.catalogNote,
+    addedAt: record.addedAt || "",
+  }));
+  const blob = new Blob([JSON.stringify({ addedBooks: addedRows, editedRecords: editedRows }, null, 2)], { type: "application/json" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = "library_teacher_updates.json";
   link.click();
   URL.revokeObjectURL(link.href);
+}
+
+function appendChatMessage(role, html) {
+  const item = document.createElement("div");
+  item.className = `chat-message ${role}`;
+  item.innerHTML = html;
+  els.chatLog.appendChild(item);
+  els.chatLog.scrollTop = els.chatLog.scrollHeight;
+}
+
+function chatRecordLine(record) {
+  const person = primaryPerson(record);
+  return `<li><button type="button" class="chat-result" data-id="${escapeHtml(record.id)}">
+    <strong>${escapeHtml(record.title || "Untitled")}</strong>
+    <span>${escapeHtml(record.accession || "No accession")} | ${escapeHtml(person || record.category)} | ${escapeHtml(recordLocation(record))}</span>
+  </button></li>`;
+}
+
+function chatbotResponse(question) {
+  const text = norm(question);
+  const allRecords = records;
+  if (!text) return "Ask me a book title, author, accession number, shelf, rack, or availability question.";
+
+  const shelfMatch = text.match(/\bshelf\s*(\d+|sh|tabletop|table top)\b/);
+  if (shelfMatch) {
+    const shelf = shelfMatch[1].replace("table top", "TableTop").replace("tabletop", "TableTop").toUpperCase() === "SH"
+      ? "SH"
+      : shelfMatch[1].replace("table top", "TableTop").replace("tabletop", "TableTop");
+    const shelfRecords = allRecords.filter((record) => String(record.shelf || "").toLowerCase() === String(shelf).toLowerCase());
+    if (!shelfRecords.length) return `I could not find records in ${escapeHtml(shelfLabel(shelf))}.`;
+    return `<p>${escapeHtml(shelfLabel(shelf))} has ${shelfRecords.length} matching records. Top matches:</p><ul>${shelfRecords.slice(0, 6).map(chatRecordLine).join("")}</ul>`;
+  }
+
+  if (text.includes("available") || text.includes("missing") || text.includes("out") || text.includes("student hand") || text.includes("staff hand")) {
+    const statusMatches = allRecords.filter((record) => searchableText(record).includes(text) || norm(record.status).split(" ").some((word) => text.includes(word)));
+    const list = statusMatches.length ? statusMatches : allRecords.filter((record) => record.status !== "Available");
+    return `<p>I found ${list.length} status-related records. Top matches:</p><ul>${list.slice(0, 6).map(chatRecordLine).join("")}</ul>`;
+  }
+
+  const queryTerms = text.split(" ").filter((term) => term.length > 1);
+  const matches = allRecords
+    .map((record) => {
+      const searchable = searchableText(record);
+      const score = queryTerms.reduce((sum, term) => sum + (searchable.includes(term) ? 1 : 0), 0);
+      const exactBoost = norm(record.accession) === text || norm(record.title) === text ? 3 : 0;
+      return { record, score: score + exactBoost };
+    })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || locationCompare(a.record, b.record))
+    .map((item) => item.record);
+
+  if (!matches.length) {
+    return "I could not find a catalogue match. Try accession number, exact title words, author name, shelf number, or publisher.";
+  }
+  const first = matches[0];
+  return `<p>Best match: <strong>${escapeHtml(first.title || "Untitled")}</strong> is at <strong>${escapeHtml(recordLocation(first))}</strong>.</p>
+    <ul>${matches.slice(0, 6).map(chatRecordLine).join("")}</ul>`;
+}
+
+function askChatbot(event) {
+  event.preventDefault();
+  const question = els.chatInput.value.trim();
+  if (!question) return;
+  appendChatMessage("user", escapeHtml(question));
+  appendChatMessage("bot", chatbotResponse(question));
+  els.chatInput.value = "";
+}
+
+function openChat() {
+  els.chatPanel.classList.remove("hidden");
+  if (!els.chatLog.children.length) {
+    appendChatMessage("bot", "Ask me where a book is, whether an accession number is available, or what is on a shelf.");
+  }
+  els.chatInput.focus();
 }
 
 function render() {
@@ -592,7 +814,24 @@ els.printResults.addEventListener("click", () => {
   window.print();
 });
 
+els.chatToggle.addEventListener("click", openChat);
+els.closeChat.addEventListener("click", () => {
+  els.chatPanel.classList.add("hidden");
+});
+els.chatForm.addEventListener("submit", askChatbot);
+els.chatLog.addEventListener("click", (event) => {
+  const button = event.target.closest(".chat-result");
+  if (button) showDetail(button.dataset.id);
+});
 els.teacherMode.addEventListener("click", unlockTeacherMode);
+els.addBookToggle.addEventListener("click", () => {
+  els.addBookPanel.classList.toggle("hidden");
+  if (!els.addBookPanel.classList.contains("hidden")) els.newAccession.focus();
+});
+els.closeAddBook.addEventListener("click", () => {
+  els.addBookPanel.classList.add("hidden");
+});
+els.addBookForm.addEventListener("submit", saveNewBook);
 els.exportUpdates.addEventListener("click", exportTeacherUpdates);
 els.saveUpdate.addEventListener("click", saveTeacherUpdate);
 els.undoUpdate.addEventListener("click", undoTeacherUpdate);

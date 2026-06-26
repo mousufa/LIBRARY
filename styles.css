@@ -97,6 +97,127 @@ h2 {
   padding: 16px;
 }
 
+.chat-panel,
+.add-book-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+
+.chat-panel {
+  padding: 16px;
+}
+
+.chat-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.chat-log {
+  display: grid;
+  gap: 10px;
+  max-height: 280px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fbfcfe;
+  padding: 12px;
+}
+
+.chat-message {
+  max-width: 900px;
+  border-radius: 8px;
+  padding: 10px 12px;
+  line-height: 1.4;
+}
+
+.chat-message.user {
+  justify-self: end;
+  background: var(--navy);
+  color: #ffffff;
+}
+
+.chat-message.bot {
+  justify-self: start;
+  background: #e7f2f0;
+}
+
+.chat-message p {
+  margin: 0 0 8px;
+}
+
+.chat-message ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chat-message li + li {
+  margin-top: 6px;
+}
+
+.chat-result {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 8px;
+  text-align: left;
+}
+
+.chat-result strong,
+.chat-result span {
+  display: block;
+}
+
+.chat-result span {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.chat-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.chat-form input,
+.add-book-form input {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fbfcfe;
+  color: var(--ink);
+  padding: 0 10px;
+}
+
+.add-book-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.add-book-form .wide {
+  grid-column: span 2;
+}
+
+.form-actions {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+}
+
 .search-box {
   position: relative;
 }
@@ -505,6 +626,10 @@ dd {
     grid-template-columns: 1fr;
   }
 
+  .add-book-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .filters,
   .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -527,9 +652,23 @@ dd {
   }
 
   .topbar,
+  .chat-header,
   .results-heading {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .top-actions,
+  .chat-form,
+  .add-book-form,
+  .add-book-form .wide {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .top-actions,
+  .form-actions {
+    flex-wrap: wrap;
   }
 
   h1 {
