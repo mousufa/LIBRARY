@@ -14,6 +14,8 @@
           <h1>Library Access Portal</h1>
         </div>
         <div class="top-actions">
+          <button class="button" id="teacherMode" type="button">Teacher update</button>
+          <button class="button hidden" id="exportUpdates" type="button">Export updates</button>
           <button class="button" id="printResults" type="button">Print</button>
           <button class="button" id="clearFilters" type="button">Reset</button>
         </div>
@@ -42,6 +44,10 @@
             <select id="rackFilter"></select>
           </label>
           <label>
+            <span>Status</span>
+            <select id="statusFilter"></select>
+          </label>
+          <label>
             <span>Sort</span>
             <select id="sortMode">
               <option value="location">Shelf and rack</option>
@@ -61,7 +67,7 @@
           <div class="panel-heading">
             <div>
               <p class="eyebrow">Browse</p>
-              <h2>Shelves</h2>
+              <h2>Shelves & status</h2>
             </div>
             <span id="shelfCount"></span>
           </div>
@@ -104,6 +110,36 @@
       <h2 id="detailTitle">Select a record</h2>
       <div id="detailLocation" class="location-card"></div>
       <dl id="detailFields"></dl>
+      <section class="admin-panel hidden" id="adminPanel">
+        <p class="eyebrow">Teacher update</p>
+        <label>
+          <span>Status</span>
+          <select id="adminStatus">
+            <option value="Available">Available in library</option>
+            <option value="Out with student/staff">Out with student/staff</option>
+            <option value="Not available">Not available</option>
+            <option value="Logged, not yet shelved">Logged, not yet shelved</option>
+            <option value="Needs verification">Needs verification</option>
+            <option value="Missing">Missing / not found</option>
+          </select>
+        </label>
+        <div class="admin-grid">
+          <label>
+            <span>Shelf</span>
+            <input id="adminShelf" type="text" placeholder="Example: 5">
+          </label>
+          <label>
+            <span>Rack</span>
+            <input id="adminRack" type="text" placeholder="Example: A">
+          </label>
+        </div>
+        <label>
+          <span>Note</span>
+          <input id="adminNote" type="text" placeholder="Return date, borrower, correction note">
+        </label>
+        <button class="button primary" id="saveUpdate" type="button">Save update</button>
+        <button class="button" id="undoUpdate" type="button">Undo last update</button>
+      </section>
     </aside>
 
     <script src="data.js"></script>

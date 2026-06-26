@@ -140,7 +140,7 @@ select:focus {
 
 .filters {
   display: grid;
-  grid-template-columns: 150px 220px repeat(3, 130px);
+  grid-template-columns: 140px 190px repeat(4, 120px);
   gap: 10px;
 }
 
@@ -164,7 +164,7 @@ select {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  grid-template-columns: repeat(5, minmax(150px, 1fr));
   gap: 12px;
   margin: 16px 0;
 }
@@ -176,6 +176,17 @@ select {
   padding: 14px;
   text-align: left;
   cursor: pointer;
+  min-height: 86px;
+  position: relative;
+  overflow: hidden;
+}
+
+.summary-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: var(--teal);
 }
 
 .summary-card strong {
@@ -308,6 +319,19 @@ tbody tr:hover {
   background: #f0f7f5;
 }
 
+tbody tr.out {
+  background: #fff8e8;
+}
+
+tbody tr.missing {
+  background: #fff0f0;
+}
+
+tbody tr.verify,
+tbody tr.unassigned {
+  background: #f7fbff;
+}
+
 .title-cell {
   min-width: 330px;
   font-weight: 700;
@@ -323,6 +347,16 @@ tbody tr:hover {
   font-size: 12px;
 }
 
+.hidden {
+  display: none !important;
+}
+
+.button.primary {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #ffffff;
+}
+
 .pill {
   display: inline-block;
   border-radius: 999px;
@@ -335,6 +369,10 @@ tbody tr:hover {
 
 .pill.books {
   background: var(--teal);
+}
+
+.pill.journals {
+  background: #2563eb;
 }
 
 .pill.bpharm {
@@ -403,7 +441,8 @@ tbody tr:hover {
 .location-card strong {
   display: block;
   margin-top: 4px;
-  font-size: 28px;
+  font-size: 24px;
+  line-height: 1.15;
 }
 
 mark {
@@ -426,6 +465,32 @@ dt {
 
 dd {
   margin: 0;
+}
+
+.admin-panel {
+  border-top: 1px solid var(--line);
+  margin-top: 18px;
+  padding-top: 16px;
+}
+
+.admin-panel label {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.admin-panel input,
+.admin-panel select {
+  width: 100%;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 10px;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
 .empty-state {
