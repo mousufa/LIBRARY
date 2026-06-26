@@ -154,14 +154,22 @@ async function loadRemoteRecords() {
     return;
   }
   setStatus("Loading shared library database...");
-  const { data, error } = await db.from(dbTable).select("record");
-  if (error) {
-    console.error(error);
-    setStatus("Could not load Supabase records. Showing local fallback data.", true);
-    return;
+  const pageSize = 1000;
+  const loaded = [];
+  for (let from = 0; ; from += pageSize) {
+    const to = from + pageSize - 1;
+    const { data, error } = await db.from(dbTable).select("record").range(from, to);
+    if (error) {
+      console.error(error);
+      setStatus("Could not load Supabase records. Showing local fallback data.", true);
+      return;
+    }
+    if (!Array.isArray(data) || !data.length) break;
+    loaded.push(...data);
+    if (data.length < pageSize) break;
   }
-  if (Array.isArray(data) && data.length) {
-    baseRecords = data.map((row) => normalizeRecord(row.record || {})).filter((record) => record.id);
+  if (loaded.length) {
+    baseRecords = loaded.map((row) => normalizeRecord(row.record || {})).filter((record) => record.id);
     setStatus(`Shared database loaded: ${baseRecords.length} records.`);
   } else {
     setStatus("Supabase table is empty. Showing local fallback data until records are imported.", true);
